@@ -1,16 +1,16 @@
 {
   "compilerOptions": {
-
-    "target": "es6",                                  
+    "target": "es6",
     "module": "commonjs",
-    "esModuleInterop": true,                                 
+    "esModuleInterop": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "strict": true, 
+    "strict": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
-    "sourceMap": true,           
-    "resolveJsonModule": true      
+    "sourceMap": true,
+    "resolveJsonModule": true
+
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
