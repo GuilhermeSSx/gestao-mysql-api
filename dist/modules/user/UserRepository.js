@@ -44,7 +44,8 @@ class UserRepository {
                             id_usuario: results[0].id_usuario,
                             email: results[0].email
                         }, process.env.SECRET, { expiresIn: "1d" });
-                        return response.status(200).json({ token: token, message: 'Autenticado com sucesso.' });
+                        const nome = results[0].nome; // Adicione esta linha para obter o nome do usuário
+                        return response.status(200).json({ token: token, nome: nome, message: 'Autenticado com sucesso.' });
                     }
                 });
             });
