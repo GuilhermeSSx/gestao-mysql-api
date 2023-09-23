@@ -9,7 +9,7 @@
     "start": "node dist/server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "GuilhermeSSx",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
