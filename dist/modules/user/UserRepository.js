@@ -12,12 +12,12 @@ class UserRepository {
                 if (err) {
                     return response.status(500).json(err);
                 }
-                connection.query('INSERT INTO usuarios ( nome, email, password) VALUES (?,?,?)', [nome, email, hash], (error, result, fileds) => {
+                connection.query('INSERT INTO usuarios (nome, email, password) VALUES (?,?,?)', [nome, email, hash], (error, result, fileds) => {
                     connection.release();
                     if (error) {
                         return response.status(400).json(error);
                     }
-                    response.status(200).json({ message: 'Usuario criado com sucesso!' });
+                    response.status(200).json({ message: 'Usuário criado com sucesso!' });
                 });
             });
         });
@@ -25,10 +25,15 @@ class UserRepository {
     login(request, response) {
         const { email, password } = request.body;
         mysql_1.pool.getConnection((err, connection) => {
+            if (err) {
+                return response.status(500).json({ error: "Erro na sua autenticação!" });
+            }
+            // Defina um tempo limite para a consulta SQL em milissegundos (por exemplo, 5000 para 5 segundos)
+            connection.config.queryTimeout = 5000;
             connection.query('SELECT * FROM usuarios WHERE email = ?', [email], (error, results, fileds) => {
                 connection.release();
                 if (error) {
-                    return response.status(400).json({ error: "Erro na sua autenticação! " });
+                    return response.status(400).json({ error: "Erro na sua autenticação!" });
                 }
                 if (results.length === 0) {
                     // Usuário não encontrado, retorne uma resposta apropriada
@@ -36,7 +41,7 @@ class UserRepository {
                 }
                 (0, bcrypt_1.compare)(password, results[0].password, (err, result) => {
                     if (err) {
-                        return response.status(400).json({ error: "Erro na sua autenticação! " });
+                        return response.status(400).json({ error: "Erro na sua autenticação!" });
                     }
                     if (result) {
                         // Não inclua o token na resposta
@@ -44,6 +49,10 @@ class UserRepository {
                         const id_usuario = results[0].id_usuario;
                         const email = results[0].email;
                         return response.status(200).json({ id_usuario, nome, email, message: 'Autenticado com sucesso.' });
+                    }
+                    else {
+                        // Senha incorreta
+                        return response.status(401).json({ error: "Senha incorreta" });
                     }
                 });
             });

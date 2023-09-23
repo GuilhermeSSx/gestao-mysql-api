@@ -30,6 +30,13 @@ class UserRepository {
     login(request: Request, response: Response) {
         const { email, password } = request.body;
         pool.getConnection((err: any, connection: any) => {
+            if (err) {
+                return response.status(500).json({ error: "Erro na sua autenticação!" });
+            }
+
+            // Defina um tempo limite para a consulta SQL em milissegundos (por exemplo, 5000 para 5 segundos)
+            connection.config.queryTimeout = 5000;
+
             connection.query(
                 'SELECT * FROM usuarios WHERE email = ?',
                 [email],
