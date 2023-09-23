@@ -56,7 +56,8 @@ class UserRepository {
                             // jsonwebtoken JWT
                             const token = sign({
                                 id_usuario: results[0].id_usuario,
-                                email: results[0].email
+                                email: results[0].email,
+                                nome: results[0].nome
                             }, process.env.SECRET as string, { expiresIn: "1d" })
 
                             return response.status(200).json({ token: token, message: 'Autenticado com sucesso.' })
