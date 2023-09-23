@@ -39,13 +39,11 @@ class UserRepository {
                         return response.status(400).json({ error: "Erro na sua autenticação! " });
                     }
                     if (result) {
-                        // jsonwebtoken JWT
-                        const token = (0, jsonwebtoken_1.sign)({
-                            id_usuario: results[0].id_usuario,
-                            email: results[0].email
-                        }, process.env.SECRET, { expiresIn: "1d" });
+                        // Não inclua o token na resposta
                         const nome = results[0].nome; // Adicione esta linha para obter o nome do usuário
-                        return response.status(200).json({ token: token, nome: nome, message: 'Autenticado com sucesso.' });
+                        const id_usuario = results[0].id_usuario;
+                        const email = results[0].email;
+                        return response.status(200).json({ id_usuario, nome, email, message: 'Autenticado com sucesso.' });
                     }
                 });
             });

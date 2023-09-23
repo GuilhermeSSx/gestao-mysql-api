@@ -3,10 +3,8 @@ import { hash, compare } from 'bcrypt';
 import { sign, verify } from 'jsonwebtoken';
 import { Request, Response } from 'express';
 
-
 class UserRepository {
     cadastrar(request: Request, response: Response) {
-
         const { nome, email, password } = request.body;
         pool.getConnection((err: any, connection: any) => {
             hash(password, 10, (err, hash) => {
@@ -24,10 +22,9 @@ class UserRepository {
                         }
                         response.status(200).json({ message: 'Usuario criado com sucesso!' });
                     }
-                )
-            })
-        })
-
+                );
+            });
+        });
     }
 
     login(request: Request, response: Response) {
@@ -53,22 +50,18 @@ class UserRepository {
                         }
 
                         if (result) {
-                            // jsonwebtoken JWT
-                            const token = sign({
-                                id_usuario: results[0].id_usuario,
-                                email: results[0].email
-                            }, process.env.SECRET as string, { expiresIn: "1d" });
-
+                            // Não inclua o token na resposta
                             const nome = results[0].nome; // Adicione esta linha para obter o nome do usuário
+                            const id_usuario = results[0].id_usuario;
+                            const email = results[0].email;
 
-                            return response.status(200).json({ token: token, nome: nome, message: 'Autenticado com sucesso.' });
+                            return response.status(200).json({ id_usuario, nome, email, message: 'Autenticado com sucesso.' });
                         }
-                    })
+                    });
                 }
-            )
-        })
+            );
+        });
     }
-
 
     getUser(request: any, response: any) {
         const decode: any = verify(request.headers.authorization, process.env.SECRET as string);
@@ -83,7 +76,7 @@ class UserRepository {
                             return response.status(400).send({
                                 error: error,
                                 response: null
-                            })
+                            });
                         }
 
                         console.log(resultado);
@@ -94,14 +87,12 @@ class UserRepository {
                                 email: resultado[0].email,
                                 id_usuario: resultado[0].id_usuario,
                             }
-                        })
+                        });
                     }
-                )
-            })
+                );
+            });
         }
     }
-
-
 }
 
 export { UserRepository };
