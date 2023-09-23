@@ -3,8 +3,10 @@ import { hash, compare } from 'bcrypt';
 import { sign, verify } from 'jsonwebtoken';
 import { Request, Response } from 'express';
 
+
 class UserRepository {
     cadastrar(request: Request, response: Response) {
+
         const { nome, email, password } = request.body;
         pool.getConnection((err: any, connection: any) => {
             hash(password, 10, (err, hash) => {
@@ -25,6 +27,7 @@ class UserRepository {
                 )
             })
         })
+
     }
 
     login(request: Request, response: Response) {
@@ -40,6 +43,7 @@ class UserRepository {
                     }
 
                     if (results.length === 0) {
+                        // Usuário não encontrado, retorne uma resposta apropriada
                         return response.status(404).json({ error: "Usuário não encontrado" });
                     }
 
@@ -49,13 +53,13 @@ class UserRepository {
                         }
 
                         if (result) {
+                            // jsonwebtoken JWT
                             const token = sign({
                                 id_usuario: results[0].id_usuario,
-                                email: results[0].email,
-                                nome: results[0].nome, // Adicione o nome do usuário ao token
+                                email: results[0].email
                             }, process.env.SECRET as string, { expiresIn: "1d" })
 
-                            return response.status(200).json({ token: token, message: 'Autenticado com sucesso.', nome: results[0].nome });
+                            return response.status(200).json({ token: token, message: 'Autenticado com sucesso.' })
                         }
                     })
                 }
@@ -64,12 +68,7 @@ class UserRepository {
     }
 
     getUser(request: any, response: any) {
-        const token = request.headers.authorization;
-        if (!token) {
-            return response.status(401).json({ error: "Token não fornecido" });
-        }
-
-        const decode: any = verify(token, process.env.SECRET as string);
+        const decode: any = verify(request.headers.authorization, process.env.SECRET as string);
         if (decode.email) {
             pool.getConnection((error, conn) => {
                 conn.query(
@@ -84,24 +83,22 @@ class UserRepository {
                             })
                         }
 
-                        if (resultado.length > 0) {
-                            const usuario = {
+                        console.log(resultado);
+
+                        return response.status(201).send({
+                            usuarios: {
                                 nome: resultado[0].nome,
                                 email: resultado[0].email,
                                 id_usuario: resultado[0].id_usuario,
-                            };
-
-                            return response.status(201).send({
-                                usuario: usuario
-                            });
-                        } else {
-                            return response.status(404).json({ error: "Usuário não encontrado" });
-                        }
+                            }
+                        })
                     }
                 )
             })
         }
     }
+
+
 }
 
 export { UserRepository };
