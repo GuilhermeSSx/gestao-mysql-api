@@ -13,14 +13,14 @@ class UserRepository {
                 }
 
                 connection.query(
-                    'INSERT INTO usuarios ( nome, email, password) VALUES (?,?,?)',
+                    'INSERT INTO usuarios (nome, email, password) VALUES (?,?,?)',
                     [nome, email, hash],
                     (error: any, result: any, fileds: any) => {
                         connection.release();
                         if (error) {
                             return response.status(400).json(error);
                         }
-                        response.status(200).json({ message: 'Usuario criado com sucesso!' });
+                        response.status(200).json({ message: 'Usuário criado com sucesso!' });
                     }
                 );
             });
@@ -36,7 +36,7 @@ class UserRepository {
                 (error: any, results: any, fileds: any) => {
                     connection.release();
                     if (error) {
-                        return response.status(400).json({ error: "Erro na sua autenticação! " });
+                        return response.status(400).json({ error: "Erro na sua autenticação!" });
                     }
 
                     if (results.length === 0) {
@@ -46,7 +46,7 @@ class UserRepository {
 
                     compare(password, results[0].password, (err, result) => {
                         if (err) {
-                            return response.status(400).json({ error: "Erro na sua autenticação! " });
+                            return response.status(400).json({ error: "Erro na sua autenticação!" });
                         }
 
                         if (result) {
@@ -56,6 +56,9 @@ class UserRepository {
                             const email = results[0].email;
 
                             return response.status(200).json({ id_usuario, nome, email, message: 'Autenticado com sucesso.' });
+                        } else {
+                            // Senha incorreta
+                            return response.status(401).json({ error: "Senha incorreta" });
                         }
                     });
                 }

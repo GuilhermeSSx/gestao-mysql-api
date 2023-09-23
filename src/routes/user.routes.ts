@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { login } from "../middleware/login";
 import { UserRepository } from "../modules/user/UserRepository";
 
 const userRoutes = Router();
@@ -14,7 +13,7 @@ userRoutes.post('/sign-in', (request, response) => {
     userRepository.login(request, response);
 })
 
-userRoutes.get('/get-user', login, (request, response) => {
+userRoutes.get('/get-user', (request, response) => {
     userRepository.getUser(request, response);
 })
 
