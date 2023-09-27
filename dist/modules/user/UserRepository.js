@@ -31,57 +31,6 @@ class UserRepository {
             });
         });
     }
-    verifyUserByEmailOrGoogleId(request, response) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                const { email, googleId } = request.body;
-                mysql_1.pool.getConnection((error, connection) => {
-                    if (error) {
-                        reject(error);
-                        return;
-                    }
-                    // Consulta SQL para verificar a existência do usuário com base no email ou google_id
-                    let query;
-                    let queryParams;
-                    if (email && googleId) {
-                        // Verifica tanto o email quanto o googleId
-                        query = 'SELECT * FROM usuarios WHERE email = ? OR google_id = ?';
-                        queryParams = [email, googleId];
-                    }
-                    else if (email) {
-                        // Verifica apenas o email
-                        query = 'SELECT * FROM usuarios WHERE email = ?';
-                        queryParams = [email];
-                    }
-                    else if (googleId) {
-                        // Verifica apenas o googleId
-                        query = 'SELECT * FROM usuarios WHERE google_id = ?';
-                        queryParams = [googleId];
-                    }
-                    else {
-                        // Nenhum critério fornecido, rejeitar a solicitação
-                        connection.release();
-                        reject(new Error('Nenhum critério de verificação fornecido.'));
-                        return;
-                    }
-                    connection.query(query, queryParams, (queryError, results) => {
-                        connection.release();
-                        if (queryError) {
-                            reject(queryError);
-                            return;
-                        }
-                        // Se houver resultados, significa que o usuário existe
-                        if (results.length > 0) {
-                            resolve(true);
-                        }
-                        else {
-                            resolve(false);
-                        }
-                    });
-                });
-            });
-        });
-    }
     cadastrarComGoogle(request, response) {
         const { name, email, google_id, password } = request.body;
         // Verifique se já existe um usuário com o mesmo email ou google_id
@@ -116,21 +65,33 @@ class UserRepository {
             });
         });
     }
-    linkGoogleAccount(request, response) {
+    verificaEmailExistente(request, response) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { userId, googleId } = request.body;
-            mysql_1.pool.getConnection((err, connection) => {
-                if (err) {
-                    return response.status(500).json({ error: "Erro ao vincular a conta do Google" });
-                }
-                connection.query('UPDATE usuarios SET google_id = ? WHERE id = ?', [googleId, userId], (error, result, fields) => {
-                    connection.release();
+            try {
+                const { email } = request.body;
+                mysql_1.pool.getConnection((error, conn) => {
                     if (error) {
-                        return response.status(400).json({ error: "Erro ao vincular a conta do Google" });
+                        return response.status(500).json({ error: "Erro no servidor" });
                     }
-                    response.status(200).json({ message: 'Conta do Google vinculada com sucesso!' });
+                    conn.query('SELECT * FROM usuarios WHERE email = ?', [email], (queryError, results) => {
+                        conn.release();
+                        if (queryError) {
+                            return response.status(500).json({ error: "Erro na verificação de email existente" });
+                        }
+                        // Se um usuário com o mesmo email já existe, retorne verdadeiro, caso contrário, retorne falso
+                        const emailExists = results.length > 0;
+                        if (emailExists) {
+                            return response.status(200).json({ emailExists: true });
+                        }
+                        else {
+                            return response.status(200).json({ emailExists: false });
+                        }
+                    });
                 });
-            });
+            }
+            catch (error) {
+                return response.status(500).json({ error: "Erro na verificação de email existente" });
+            }
         });
     }
     login(request, response) {

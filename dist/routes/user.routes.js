@@ -16,13 +16,10 @@ userRoutes.post('/sign-up-google', (request, response) => {
 userRoutes.post('/sign-in', (request, response) => {
     userRepository.login(request, response);
 });
-userRoutes.post('/link-google', (request, response) => {
-    userRepository.linkGoogleAccount(request, response);
-});
 userRoutes.get('/get-user', (request, response) => {
     userRepository.getUser(request, response);
 });
-userRoutes.get('/get-user-google', (request, response) => {
-    userRepository.verifyUserByEmailOrGoogleId(request, response);
+userRoutes.get('/verifica-email', (request, response) => {
+    userRepository.verificaEmailExistente(request, response);
 });
 //# sourceMappingURL=user.routes.js.map
