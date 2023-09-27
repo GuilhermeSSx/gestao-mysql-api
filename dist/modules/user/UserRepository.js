@@ -31,6 +31,35 @@ class UserRepository {
             });
         });
     }
+    verifyUserByEmailOrGoogleId(request, response) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                const { email, googleId } = request.query;
+                mysql_1.pool.getConnection((error, connection) => {
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+                    // Consulta SQL para verificar a existência do usuário com base no email ou google_id
+                    const query = 'SELECT * FROM usuarios WHERE email = ? OR google_id = ?';
+                    connection.query(query, [email, googleId], (queryError, results) => {
+                        connection.release();
+                        if (queryError) {
+                            reject(queryError);
+                            return;
+                        }
+                        // Se houver resultados, significa que o usuário existe
+                        if (results.length > 0) {
+                            resolve(true);
+                        }
+                        else {
+                            resolve(false);
+                        }
+                    });
+                });
+            });
+        });
+    }
     cadastrarComGoogle(request, response) {
         const { name, email, google_id, password } = request.body;
         // Verifique se já existe um usuário com o mesmo email ou google_id

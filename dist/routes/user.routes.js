@@ -22,4 +22,7 @@ userRoutes.post('/link-google', (request, response) => {
 userRoutes.get('/get-user', (request, response) => {
     userRepository.getUser(request, response);
 });
+userRoutes.get('/get-user-google', (request, response) => {
+    userRepository.verifyUserByEmailOrGoogleId(request, response);
+});
 //# sourceMappingURL=user.routes.js.map
