@@ -36,6 +36,8 @@ class UserRepository {
                     return;
                 }
 
+                //teste
+
                 // Consulta SQL para verificar a existência do usuário com base no email ou google_id
                 let query;
                 let queryParams;
