@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 
 class UserRepository {
     cadastrar(request: Request, response: Response) {
-        const { nome, email, password } = request.body;
+        const { name, email, password } = request.body;
         pool.getConnection((err: any, connection: any) => {
             hash(password, 10, (err, hash) => {
                 if (err) {
@@ -14,7 +14,7 @@ class UserRepository {
 
                 connection.query(
                     'INSERT INTO usuarios (nome, email, password) VALUES (?,?,?)',
-                    [nome, email, hash],
+                    [name, email, hash],
                     (error: any, result: any, fileds: any) => {
                         connection.release();
                         if (error) {
@@ -58,11 +58,11 @@ class UserRepository {
 
                         if (result) {
                             // Não inclua o token na resposta
-                            const nome = results[0].nome; // Adicione esta linha para obter o nome do usuário
-                            const id_usuario = results[0].id_usuario;
+                            const name = results[0].name; // Adicione esta linha para obter o nome do usuário
+                            const id = results[0].id;
                             const email = results[0].email;
 
-                            return response.status(200).json({ id_usuario, nome, email, message: 'Autenticado com sucesso.' });
+                            return response.status(200).json({ id, name, email, message: 'Autenticado com sucesso.' });
                         } else {
                             // Senha incorreta
                             return response.status(401).json({ error: "Senha incorreta" });
@@ -93,9 +93,9 @@ class UserRepository {
 
                         return response.status(201).send({
                             usuarios: {
-                                nome: resultado[0].nome,
+                                name: resultado[0].name,
                                 email: resultado[0].email,
-                                id_usuario: resultado[0].id_usuario,
+                                id: resultado[0].id,
                             }
                         });
                     }
