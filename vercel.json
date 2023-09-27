@@ -19,7 +19,7 @@
     ],
     "functions": {
         "user/get-user-google": {
-            "maxDuration": 60
+            "maxDuration": 90
         }
     }
 }
