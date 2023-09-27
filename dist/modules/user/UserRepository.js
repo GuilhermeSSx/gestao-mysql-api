@@ -31,6 +31,40 @@ class UserRepository {
             });
         });
     }
+    cadastrarComGoogle(request, response) {
+        const { name, email, google_id, password } = request.body;
+        // Verifique se já existe um usuário com o mesmo email ou google_id
+        mysql_1.pool.getConnection((err, connection) => {
+            if (err) {
+                return response.status(500).json({ error: "Erro no servidor" });
+            }
+            connection.query('SELECT * FROM usuarios WHERE email = ? OR google_id = ?', [email, google_id], (error, results) => {
+                if (error) {
+                    connection.release();
+                    return response.status(500).json({ error: "Erro na verificação de usuário existente" });
+                }
+                // Se um usuário com o mesmo email ou google_id já existe, retorne um erro
+                if (results.length > 0) {
+                    connection.release();
+                    return response.status(400).json({ error: "Usuário com o mesmo email ou google_id já existe" });
+                }
+                // Se não houver usuário existente, insira o novo usuário no banco de dados
+                (0, bcrypt_1.hash)(password, 10, (hashErr, hashedPassword) => {
+                    if (hashErr) {
+                        connection.release();
+                        return response.status(500).json({ error: "Erro no servidor" });
+                    }
+                    connection.query('INSERT INTO usuarios (name, email, google_id, password) VALUES (?,?,?,?)', [name, email, google_id, hashedPassword], (insertError, result) => {
+                        connection.release();
+                        if (insertError) {
+                            return response.status(400).json({ error: "Erro ao cadastrar o usuário" });
+                        }
+                        response.status(200).json({ message: 'Usuário criado com sucesso!' });
+                    });
+                });
+            });
+        });
+    }
     linkGoogleAccount(request, response) {
         return __awaiter(this, void 0, void 0, function* () {
             const { userId, googleId } = request.body;

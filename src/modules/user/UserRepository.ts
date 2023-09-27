@@ -27,6 +27,56 @@ class UserRepository {
         });
     }
 
+    cadastrarComGoogle(request: Request, response: Response) {
+        const { name, email, google_id, password } = request.body;
+
+        // Verifique se já existe um usuário com o mesmo email ou google_id
+        pool.getConnection((err: any, connection: any) => {
+            if (err) {
+                return response.status(500).json({ error: "Erro no servidor" });
+            }
+
+            connection.query(
+                'SELECT * FROM usuarios WHERE email = ? OR google_id = ?',
+                [email, google_id],
+                (error: any, results: any) => {
+                    if (error) {
+                        connection.release();
+                        return response.status(500).json({ error: "Erro na verificação de usuário existente" });
+                    }
+
+                    // Se um usuário com o mesmo email ou google_id já existe, retorne um erro
+                    if (results.length > 0) {
+                        connection.release();
+                        return response.status(400).json({ error: "Usuário com o mesmo email ou google_id já existe" });
+                    }
+
+                    // Se não houver usuário existente, insira o novo usuário no banco de dados
+                    hash(password, 10, (hashErr, hashedPassword) => {
+                        if (hashErr) {
+                            connection.release();
+                            return response.status(500).json({ error: "Erro no servidor" });
+                        }
+
+                        connection.query(
+                            'INSERT INTO usuarios (name, email, google_id, password) VALUES (?,?,?,?)',
+                            [name, email, google_id, hashedPassword],
+                            (insertError: any, result: any) => {
+                                connection.release();
+
+                                if (insertError) {
+                                    return response.status(400).json({ error: "Erro ao cadastrar o usuário" });
+                                }
+
+                                response.status(200).json({ message: 'Usuário criado com sucesso!' });
+                            }
+                        );
+                    });
+                }
+            );
+        });
+    }
+
     async linkGoogleAccount(request: Request, response: Response) {
         const { userId, googleId } = request.body;
 
@@ -101,7 +151,6 @@ class UserRepository {
             );
         });
     }
-
 
     getUser(request: any, response: any) {
         const decode: any = verify(request.headers.authorization, process.env.SECRET as string);

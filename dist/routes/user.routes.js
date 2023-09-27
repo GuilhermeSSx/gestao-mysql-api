@@ -10,6 +10,9 @@ const userRepository = new UserRepository_1.UserRepository();
 userRoutes.post('/sign-up', (request, response) => {
     userRepository.cadastrar(request, response);
 });
+userRoutes.post('/sign-up-google', (request, response) => {
+    userRepository.cadastrarComGoogle(request, response);
+});
 userRoutes.post('/sign-in', (request, response) => {
     userRepository.login(request, response);
 });
