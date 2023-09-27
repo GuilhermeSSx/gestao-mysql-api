@@ -34,15 +34,37 @@ class UserRepository {
     verifyUserByEmailOrGoogleId(request, response) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                const { email, googleId } = request.query;
+                const { email, googleId } = request.body;
                 mysql_1.pool.getConnection((error, connection) => {
                     if (error) {
                         reject(error);
                         return;
                     }
                     // Consulta SQL para verificar a existência do usuário com base no email ou google_id
-                    const query = 'SELECT * FROM usuarios WHERE email = ? OR google_id = ?';
-                    connection.query(query, [email, googleId], (queryError, results) => {
+                    let query;
+                    let queryParams;
+                    if (email && googleId) {
+                        // Verifica tanto o email quanto o googleId
+                        query = 'SELECT * FROM usuarios WHERE email = ? OR google_id = ?';
+                        queryParams = [email, googleId];
+                    }
+                    else if (email) {
+                        // Verifica apenas o email
+                        query = 'SELECT * FROM usuarios WHERE email = ?';
+                        queryParams = [email];
+                    }
+                    else if (googleId) {
+                        // Verifica apenas o googleId
+                        query = 'SELECT * FROM usuarios WHERE google_id = ?';
+                        queryParams = [googleId];
+                    }
+                    else {
+                        // Nenhum critério fornecido, rejeitar a solicitação
+                        connection.release();
+                        reject(new Error('Nenhum critério de verificação fornecido.'));
+                        return;
+                    }
+                    connection.query(query, queryParams, (queryError, results) => {
                         connection.release();
                         if (queryError) {
                             reject(queryError);
