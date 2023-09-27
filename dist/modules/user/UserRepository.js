@@ -6,13 +6,13 @@ const bcrypt_1 = require("bcrypt");
 const jsonwebtoken_1 = require("jsonwebtoken");
 class UserRepository {
     cadastrar(request, response) {
-        const { nome, email, password } = request.body;
+        const { name, email, password } = request.body;
         mysql_1.pool.getConnection((err, connection) => {
             (0, bcrypt_1.hash)(password, 10, (err, hash) => {
                 if (err) {
                     return response.status(500).json(err);
                 }
-                connection.query('INSERT INTO usuarios (nome, email, password) VALUES (?,?,?)', [nome, email, hash], (error, result, fileds) => {
+                connection.query('INSERT INTO usuarios (nome, email, password) VALUES (?,?,?)', [name, email, hash], (error, result, fileds) => {
                     connection.release();
                     if (error) {
                         return response.status(400).json(error);
@@ -45,10 +45,10 @@ class UserRepository {
                     }
                     if (result) {
                         // Não inclua o token na resposta
-                        const nome = results[0].nome; // Adicione esta linha para obter o nome do usuário
-                        const id_usuario = results[0].id_usuario;
+                        const name = results[0].name; // Adicione esta linha para obter o nome do usuário
+                        const id = results[0].id;
                         const email = results[0].email;
-                        return response.status(200).json({ id_usuario, nome, email, message: 'Autenticado com sucesso.' });
+                        return response.status(200).json({ id, name, email, message: 'Autenticado com sucesso.' });
                     }
                     else {
                         // Senha incorreta
@@ -73,9 +73,9 @@ class UserRepository {
                     console.log(resultado);
                     return response.status(201).send({
                         usuarios: {
-                            nome: resultado[0].nome,
+                            name: resultado[0].name,
                             email: resultado[0].email,
-                            id_usuario: resultado[0].id_usuario,
+                            id: resultado[0].id,
                         }
                     });
                 });
