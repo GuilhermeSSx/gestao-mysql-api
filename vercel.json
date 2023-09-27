@@ -18,7 +18,7 @@
         }
     ],
     "functions": {
-        "api/get-user-google": {
+        "user/get-user-google": {
             "maxDuration": 60
         }
     }
