@@ -16,5 +16,10 @@
             "src": "/(.*)",
             "dest": "dist/server.js"
         }
-    ]
+    ],
+    "functions": {
+        "api/get-user-google": {
+            "maxDuration": 60
+        }
+    }
 }
