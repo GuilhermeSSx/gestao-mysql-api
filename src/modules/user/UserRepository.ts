@@ -13,7 +13,7 @@ class UserRepository {
                 }
 
                 connection.query(
-                    'INSERT INTO usuarios (nome, email, password) VALUES (?,?,?)',
+                    'INSERT INTO usuarios (name, email, password) VALUES (?,?,?)',
                     [name, email, hash],
                     (error: any, result: any, fileds: any) => {
                         connection.release();

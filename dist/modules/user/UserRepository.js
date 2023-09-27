@@ -21,7 +21,7 @@ class UserRepository {
                 if (err) {
                     return response.status(500).json(err);
                 }
-                connection.query('INSERT INTO usuarios (nome, email, password) VALUES (?,?,?)', [name, email, hash], (error, result, fileds) => {
+                connection.query('INSERT INTO usuarios (name, email, password) VALUES (?,?,?)', [name, email, hash], (error, result, fileds) => {
                     connection.release();
                     if (error) {
                         return response.status(400).json(error);
@@ -49,14 +49,14 @@ class UserRepository {
         });
     }
     login(request, response) {
-        const { email, password } = request.body;
+        const { email, password, googleId } = request.body; // Adicione o googleId à requisição
         mysql_1.pool.getConnection((err, connection) => {
             if (err) {
                 return response.status(500).json({ error: "Erro na sua autenticação!" });
             }
             // Defina um tempo limite para a consulta SQL em milissegundos (por exemplo, 5000 para 5 segundos)
             connection.config.queryTimeout = 5000;
-            connection.query('SELECT * FROM usuarios WHERE email = ?', [email], (error, results, fileds) => {
+            connection.query('SELECT * FROM usuarios WHERE email = ?', [email], (error, results, fields) => {
                 connection.release();
                 if (error) {
                     return response.status(400).json({ error: "Erro na sua autenticação!" });
@@ -65,16 +65,21 @@ class UserRepository {
                     // Usuário não encontrado, retorne uma resposta apropriada
                     return response.status(404).json({ error: "Usuário não encontrado" });
                 }
+                if (googleId && !results[0].google_id) {
+                    // Se o usuário está fazendo login com o Google, mas a conta do Google não está vinculada
+                    return response.status(401).json({ error: "A conta do Google não está vinculada. Faça a vinculação." });
+                }
                 (0, bcrypt_1.compare)(password, results[0].password, (err, result) => {
                     if (err) {
                         return response.status(400).json({ error: "Erro na sua autenticação!" });
                     }
-                    if (result) {
-                        // Não inclua o token na resposta
+                    if (result || results[0].google_id) {
+                        // Se a senha está correta ou a conta do Google já está vinculada
                         const id = results[0].id;
                         const name = results[0].name;
-                        const email = results[0].email;
-                        return response.status(200).json({ id, name, email, message: 'Autenticado com sucesso.' });
+                        const userEmail = results[0].email;
+                        const userGoogleId = results[0].google_id; // Inclua o google_id na resposta, se existir
+                        return response.status(200).json({ id, name, email: userEmail, google_id: userGoogleId, message: 'Autenticado com sucesso.' });
                     }
                     else {
                         // Senha incorreta
