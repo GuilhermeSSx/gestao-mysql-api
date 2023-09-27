@@ -27,8 +27,31 @@ class UserRepository {
         });
     }
 
+    async linkGoogleAccount(request: Request, response: Response) {
+        const { userId, googleId } = request.body;
+
+        pool.getConnection((err: any, connection: any) => {
+            if (err) {
+                return response.status(500).json({ error: "Erro ao vincular a conta do Google" });
+            }
+
+            connection.query(
+                'UPDATE usuarios SET google_id = ? WHERE id = ?',
+                [googleId, userId],
+                (error: any, result: any, fields: any) => {
+                    connection.release();
+                    if (error) {
+                        return response.status(400).json({ error: "Erro ao vincular a conta do Google" });
+                    }
+                    response.status(200).json({ message: 'Conta do Google vinculada com sucesso!' });
+                }
+            );
+        });
+    }
+
     login(request: Request, response: Response) {
-        const { email, password } = request.body;
+        const { email, password, googleId } = request.body; // Adicione o googleId à requisição
+
         pool.getConnection((err: any, connection: any) => {
             if (err) {
                 return response.status(500).json({ error: "Erro na sua autenticação!" });
@@ -40,7 +63,7 @@ class UserRepository {
             connection.query(
                 'SELECT * FROM usuarios WHERE email = ?',
                 [email],
-                (error: any, results: any, fileds: any) => {
+                (error: any, results: any, fields: any) => {
                     connection.release();
                     if (error) {
                         return response.status(400).json({ error: "Erro na sua autenticação!" });
@@ -51,18 +74,24 @@ class UserRepository {
                         return response.status(404).json({ error: "Usuário não encontrado" });
                     }
 
+                    if (googleId && !results[0].google_id) {
+                        // Se o usuário está fazendo login com o Google, mas a conta do Google não está vinculada
+                        return response.status(401).json({ error: "A conta do Google não está vinculada. Faça a vinculação." });
+                    }
+
                     compare(password, results[0].password, (err, result) => {
                         if (err) {
                             return response.status(400).json({ error: "Erro na sua autenticação!" });
                         }
 
-                        if (result) {
-                            // Não inclua o token na resposta
-                            const name = results[0].name; // Adicione esta linha para obter o nome do usuário
+                        if (result || results[0].google_id) {
+                            // Se a senha está correta ou a conta do Google já está vinculada
                             const id = results[0].id;
-                            const email = results[0].email;
+                            const name = results[0].name;
+                            const userEmail = results[0].email;
+                            const userGoogleId = results[0].google_id; // Inclua o google_id na resposta, se existir
 
-                            return response.status(200).json({ id, name, email, message: 'Autenticado com sucesso.' });
+                            return response.status(200).json({ id, name, email: userEmail, google_id: userGoogleId, message: 'Autenticado com sucesso.' });
                         } else {
                             // Senha incorreta
                             return response.status(401).json({ error: "Senha incorreta" });
@@ -72,6 +101,7 @@ class UserRepository {
             );
         });
     }
+
 
     getUser(request: any, response: any) {
         const decode: any = verify(request.headers.authorization, process.env.SECRET as string);
@@ -96,6 +126,7 @@ class UserRepository {
                                 name: resultado[0].name,
                                 email: resultado[0].email,
                                 id: resultado[0].id,
+                                google_id: resultado[0].google_id
                             }
                         });
                     }
