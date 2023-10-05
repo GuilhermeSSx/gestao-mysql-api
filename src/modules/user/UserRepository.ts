@@ -87,59 +87,59 @@ class UserRepository {
     }
 
 
-    getUsers(request: any, response: any) {
-        pool.getConnection((error: any, conn: any) => {
+    // getUsers(request: any, response: any) {
+    //     pool.getConnection((error: any, conn: any) => {
 
-            conn.config.queryTimeout = 5000;
+    //         conn.config.queryTimeout = 5000;
 
-            conn.query(
+    //         conn.query(
 
-                'SELECT id, name FROM usuarios order by name ASC',
-                (error: any, resultado: any, fields: any) => {
-                    conn.release();
-                    if (error) {
-                        return response.status(400).send({
-                            error: error,
-                            response: null
-                        });
-                    }
+    //             'SELECT id, name FROM usuarios order by name ASC',
+    //             (error: any, resultado: any, fields: any) => {
+    //                 conn.release();
+    //                 if (error) {
+    //                     return response.status(400).send({
+    //                         error: error,
+    //                         response: null
+    //                     });
+    //                 }
 
-                    if(error) {
-                        return response.status(400).json({ error: "Erro em carregar os usuarios!" });
-                    }
+    //                 if(error) {
+    //                     return response.status(400).json({ error: "Erro em carregar os usuarios!" });
+    //                 }
 
-                    return response.status(200).json({ usuarios: resultado })
+    //                 return response.status(200).json({ usuarios: resultado })
 
-                }
-            );
-        });
+    //             }
+    //         );
+    //     });
 
-    }
+    // }
 
-    deleteUser(request: Request, response: Response) {
-        const { id } = request.params;
+    // deleteUser(request: Request, response: Response) {
+    //     const { id } = request.params;
 
-        pool.getConnection((err: any, connection: any) => {
-            connection.query(
-                'DELETE FROM usuarios WHERE id = ?',
-                [id],
-                (error: any, result: any, fields: any) => {
-                    connection.release();
+    //     pool.getConnection((err: any, connection: any) => {
+    //         connection.query(
+    //             'DELETE FROM usuarios WHERE id = ?',
+    //             [id],
+    //             (error: any, result: any, fields: any) => {
+    //                 connection.release();
 
-                    console.log(id);
+    //                 console.log(id);
 
-                    if (error) {
-                        return response.status(500).json({ error: "Erro ao deletar o usuário", id });
-                    }
+    //                 if (error) {
+    //                     return response.status(500).json({ error: "Erro ao deletar o usuário", id });
+    //                 }
 
-                    if (result.affectedRows === 0) {
-                        return response.status(404).json({ error: "Usuário não encontrado" });
-                    }
+    //                 if (result.affectedRows === 0) {
+    //                     return response.status(404).json({ error: "Usuário não encontrado" });
+    //                 }
 
-                    return response.status(200).json({ message: "Usuário excluído com sucesso", id });
-                });
-        });
-    }
+    //                 return response.status(200).json({ message: "Usuário excluído com sucesso", id });
+    //             });
+    //     });
+    // }
 
 
 
