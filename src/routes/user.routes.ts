@@ -14,12 +14,12 @@ userRoutes.post('/sign-in', (request, response) => {
     userRepository.login(request, response);
 })
 
-// userRoutes.get('/get-users', (request, response) => {
-//     userRepository.getUsers(request, response);
-// })
-// userRoutes.delete('/delete-user/:id', (request, response) => {
-//     userRepository.deleteUser(request, response);
-// })
+userRoutes.get('/get-users', (request, response) => {
+    userRepository.getUsers(request, response);
+})
+userRoutes.delete('/delete-user/:id', (request, response) => {
+    userRepository.deleteUser(request, response);
+})
 
 userRoutes.get('/get-user', login, (request, response) => {
     userRepository.getUser(request, response);
