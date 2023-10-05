@@ -5,6 +5,8 @@ import { Request, Response } from 'express';
 
 class UserRepository {
     cadastrar(request: Request, response: Response) {
+        
+
         const { name, email, password } = request.body;
         pool.getConnection((err: any, connection: any) => {
             hash(password, 10, (err, hash) => {
@@ -86,17 +88,24 @@ class UserRepository {
 
 
     getUsers(request: any, response: any) {
+        pool.getConnection((error: any, conn: any) => {
 
-        pool.getConnection((error, conn) => {
+            conn.config.queryTimeout = 5000;
+
             conn.query(
+
                 'SELECT id, name FROM usuarios order by name ASC',
-                (error, resultado, fileds) => {
+                (error: any, resultado: any, fields: any) => {
                     conn.release();
                     if (error) {
                         return response.status(400).send({
                             error: error,
                             response: null
                         });
+                    }
+
+                    if(error) {
+                        return response.status(400).json({ error: "Erro em carregar os usuarios!" });
                     }
 
                     return response.status(200).json({ usuarios: resultado })

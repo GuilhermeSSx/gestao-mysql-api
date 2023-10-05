@@ -65,13 +65,17 @@ class UserRepository {
     }
     getUsers(request, response) {
         mysql_1.pool.getConnection((error, conn) => {
-            conn.query('SELECT id, name FROM usuarios order by name ASC', (error, resultado, fileds) => {
+            conn.config.queryTimeout = 5000;
+            conn.query('SELECT id, name FROM usuarios order by name ASC', (error, resultado, fields) => {
                 conn.release();
                 if (error) {
                     return response.status(400).send({
                         error: error,
                         response: null
                     });
+                }
+                if (error) {
+                    return response.status(400).json({ error: "Erro em carregar os usuarios!" });
                 }
                 return response.status(200).json({ usuarios: resultado });
             });
