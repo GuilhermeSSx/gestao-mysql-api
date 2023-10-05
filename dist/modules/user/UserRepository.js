@@ -1,13 +1,4 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepository = void 0;
 const mysql_1 = require("../../mysql");
@@ -31,71 +22,8 @@ class UserRepository {
             });
         });
     }
-    cadastrarComGoogle(request, response) {
-        const { name, email, google_id, password } = request.body;
-        // Verifique se já existe um usuário com o mesmo email ou google_id
-        mysql_1.pool.getConnection((err, connection) => {
-            if (err) {
-                return response.status(500).json({ error: "Erro no servidor" });
-            }
-            connection.query('SELECT * FROM usuarios WHERE email = ? OR google_id = ?', [email, google_id], (error, results) => {
-                if (error) {
-                    connection.release();
-                    return response.status(500).json({ error: "Erro na verificação de usuário existente" });
-                }
-                // Se um usuário com o mesmo email ou google_id já existe, retorne um erro
-                if (results.length > 0) {
-                    connection.release();
-                    return response.status(400).json({ error: "Usuário com o mesmo email ou google_id já existe" });
-                }
-                // Se não houver usuário existente, insira o novo usuário no banco de dados
-                (0, bcrypt_1.hash)(password, 10, (hashErr, hashedPassword) => {
-                    if (hashErr) {
-                        connection.release();
-                        return response.status(500).json({ error: "Erro no servidor" });
-                    }
-                    connection.query('INSERT INTO usuarios (name, email, google_id, password) VALUES (?,?,?,?)', [name, email, google_id, hashedPassword], (insertError, result) => {
-                        connection.release();
-                        if (insertError) {
-                            return response.status(400).json({ error: "Erro ao cadastrar o usuário" });
-                        }
-                        response.status(200).json({ message: 'Usuário criado com sucesso!' });
-                    });
-                });
-            });
-        });
-    }
-    verificaEmailExistente(request, response) {
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const { email } = request.body;
-                mysql_1.pool.getConnection((error, conn) => {
-                    if (error) {
-                        return response.status(500).json({ error: "Erro no servidor" });
-                    }
-                    conn.query('SELECT * FROM usuarios WHERE email = ?', [email], (queryError, results) => {
-                        conn.release();
-                        if (queryError) {
-                            return response.status(500).json({ error: "Erro na verificação de email existente" });
-                        }
-                        // Se um usuário com o mesmo email já existe, retorne verdadeiro, caso contrário, retorne falso
-                        const emailExists = results.length > 0;
-                        if (emailExists) {
-                            return response.status(200).json({ emailExists: true });
-                        }
-                        else {
-                            return response.status(200).json({ emailExists: false });
-                        }
-                    });
-                });
-            }
-            catch (error) {
-                return response.status(500).json({ error: "Erro na verificação de email existente" });
-            }
-        });
-    }
     login(request, response) {
-        const { email, password, googleId } = request.body; // Adicione o googleId à requisição
+        const { email, password } = request.body;
         mysql_1.pool.getConnection((err, connection) => {
             if (err) {
                 return response.status(500).json({ error: "Erro na sua autenticação!" });
@@ -111,27 +39,57 @@ class UserRepository {
                     // Usuário não encontrado, retorne uma resposta apropriada
                     return response.status(404).json({ error: "Usuário não encontrado" });
                 }
-                if (googleId && !results[0].google_id) {
-                    // Se o usuário está fazendo login com o Google, mas a conta do Google não está vinculada
-                    return response.status(401).json({ error: "A conta do Google não está vinculada. Faça a vinculação." });
-                }
                 (0, bcrypt_1.compare)(password, results[0].password, (err, result) => {
                     if (err) {
                         return response.status(400).json({ error: "Erro na sua autenticação!" });
                     }
-                    if (result || results[0].google_id) {
-                        // Se a senha está correta ou a conta do Google já está vinculada
+                    if (result) {
+                        // jsonwebtoken JWT
+                        const token = (0, jsonwebtoken_1.sign)({
+                            id: results[0].id,
+                            name: results[0].name,
+                            email: results[0].email
+                        }, process.env.SECRET, { expiresIn: "1d" });
                         const id = results[0].id;
                         const name = results[0].name;
                         const userEmail = results[0].email;
-                        const userGoogleId = results[0].google_id; // Inclua o google_id na resposta, se existir
-                        return response.status(200).json({ id, name, email: userEmail, google_id: userGoogleId, message: 'Autenticado com sucesso.' });
+                        return response.status(200).json({ id, name, userEmail, token: token });
                     }
                     else {
                         // Senha incorreta
                         return response.status(401).json({ error: "Senha incorreta" });
                     }
                 });
+            });
+        });
+    }
+    getUsers(request, response) {
+        mysql_1.pool.getConnection((error, conn) => {
+            conn.query('SELECT id, name FROM usuarios order by name ASC', (error, resultado, fileds) => {
+                conn.release();
+                if (error) {
+                    return response.status(400).send({
+                        error: error,
+                        response: null
+                    });
+                }
+                return response.status(200).json({ usuarios: resultado });
+            });
+        });
+    }
+    deleteUser(request, response) {
+        const { id } = request.params;
+        mysql_1.pool.getConnection((err, connection) => {
+            connection.query('DELETE FROM usuarios WHERE id = ?', [id], (error, result, fields) => {
+                connection.release();
+                console.log(id);
+                if (error) {
+                    return response.status(500).json({ error: "Erro ao deletar o usuário", id });
+                }
+                if (result.affectedRows === 0) {
+                    return response.status(404).json({ error: "Usuário não encontrado" });
+                }
+                return response.status(200).json({ message: "Usuário excluído com sucesso", id });
             });
         });
     }
@@ -153,7 +111,6 @@ class UserRepository {
                             name: resultado[0].name,
                             email: resultado[0].email,
                             id: resultado[0].id,
-                            google_id: resultado[0].google_id
                         }
                     });
                 });
