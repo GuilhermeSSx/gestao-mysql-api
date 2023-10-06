@@ -83,14 +83,14 @@ class UserRepository {
     }
     deleteUser(request, response) {
         const { id } = request.params;
+        if (id == '585') {
+            return response.status(401).json({ error: "Ação não autorizada, contate o administrador do sistema", id });
+        }
         mysql_1.pool.getConnection((err, connection) => {
             connection.query('DELETE FROM usuarios WHERE id = ?', [id], (error, result, fields) => {
                 connection.release();
                 if (error) {
                     return response.status(500).json({ error: "Erro ao deletar o usuário", id });
-                }
-                if (id === '584') {
-                    return response.status(401).json({ error: "Ação não autorizada, contate o administrador do sistema", id });
                 }
                 if (result.affectedRows === 0) {
                     return response.status(404).json({ error: "Usuário não encontrado" });

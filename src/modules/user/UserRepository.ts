@@ -119,6 +119,10 @@ class UserRepository {
     deleteUser(request: Request, response: Response) {
         const { id } = request.params;
 
+        if(id == '585') {
+            return response.status(401).json({ error: "Ação não autorizada, contate o administrador do sistema", id });
+        }
+
         pool.getConnection((err: any, connection: any) => {
             connection.query(
                 'DELETE FROM usuarios WHERE id = ?',
@@ -128,10 +132,6 @@ class UserRepository {
 
                     if (error) {
                         return response.status(500).json({ error: "Erro ao deletar o usuário", id });
-                    }
-
-                    if(id === '584') {
-                        return response.status(401).json({ error: "Ação não autorizada, contate o administrador do sistema", id });
                     }
 
                     if (result.affectedRows === 0) {
