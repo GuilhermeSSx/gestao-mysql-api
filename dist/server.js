@@ -18,6 +18,9 @@ app.use(function (req, res, next) {
 app.use(cors());
 app.use(express_1.default.json());
 app.use('/user', user_routes_1.userRoutes);
+app.get('/', (req, res) => {
+    res.send('Bem-vindo à API JPNR Gestão!');
+});
 //criar o servidor
 app.listen(4000, function () {
     console.log("[ server start : port 4000 - OK ]");
