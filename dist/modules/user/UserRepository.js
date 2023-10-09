@@ -48,12 +48,14 @@ class UserRepository {
                         const token = (0, jsonwebtoken_1.sign)({
                             id: results[0].id,
                             name: results[0].name,
-                            email: results[0].email
+                            email: results[0].email,
+                            role: results[0].role
                         }, process.env.SECRET, { expiresIn: "1d" });
                         const id = results[0].id;
                         const name = results[0].name;
                         const userEmail = results[0].email;
-                        return response.status(200).json({ id, name, userEmail, token: token });
+                        const role = results[0].role;
+                        return response.status(200).json({ id, name, userEmail, role, token: token });
                     }
                     else {
                         // Senha incorreta
@@ -66,7 +68,7 @@ class UserRepository {
     getUsers(request, response) {
         mysql_1.pool.getConnection((error, conn) => {
             conn.config.queryTimeout = 5000;
-            conn.query('SELECT id, name FROM usuarios order by name ASC', (error, resultado, fields) => {
+            conn.query('SELECT id, name, email, role FROM usuarios order by name ASC', (error, resultado, fields) => {
                 conn.release();
                 if (error) {
                     return response.status(400).send({

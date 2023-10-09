@@ -64,14 +64,17 @@ class UserRepository {
                             const token = sign({
                                 id: results[0].id,
                                 name: results[0].name,
-                                email: results[0].email
+                                email: results[0].email,
+                                role: results[0].role
                             }, process.env.SECRET as string, { expiresIn: "1d" })
 
                             const id = results[0].id;
                             const name = results[0].name;
                             const userEmail = results[0].email;
+                            const role = results[0].role
+                            
 
-                            return response.status(200).json({ id, name, userEmail, token: token })
+                            return response.status(200).json({ id, name, userEmail, role, token: token })
                         } else {
                             // Senha incorreta
                             return response.status(401).json({ error: "Senha incorreta" });
@@ -94,7 +97,7 @@ class UserRepository {
 
             conn.query(
 
-                'SELECT id, name FROM usuarios order by name ASC',
+                'SELECT id, name, email, role FROM usuarios order by name ASC',
                 (error: any, resultado: any, fields: any) => {
                     conn.release();
                     if (error) {
