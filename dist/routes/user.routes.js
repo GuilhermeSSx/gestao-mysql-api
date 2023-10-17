@@ -23,4 +23,8 @@ userRoutes.delete('/delete-user/:id', (request, response) => {
 userRoutes.get('/get-user', login_1.login, (request, response) => {
     userRepository.getUser(request, response);
 });
+// Perfil de acesso ⬇️
+userRoutes.post('/criar-perfil-acesso', (request, response) => {
+    userRepository.criarPerfilAcesso(request, response);
+});
 //# sourceMappingURL=user.routes.js.map

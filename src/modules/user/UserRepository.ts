@@ -5,7 +5,7 @@ import { Request, Response } from 'express';
 
 class UserRepository {
     cadastrar(request: Request, response: Response) {
-        
+
 
         const { name, email, password } = request.body;
         pool.getConnection((err: any, connection: any) => {
@@ -72,7 +72,7 @@ class UserRepository {
                             const name = results[0].name;
                             const userEmail = results[0].email;
                             const role = results[0].role
-                            
+
 
                             return response.status(200).json({ id, name, userEmail, role, token: token })
                         } else {
@@ -107,7 +107,7 @@ class UserRepository {
                         });
                     }
 
-                    if(error) {
+                    if (error) {
                         return response.status(400).json({ error: "Erro em carregar os usuarios!" });
                     }
 
@@ -122,7 +122,7 @@ class UserRepository {
     deleteUser(request: Request, response: Response) {
         const { id } = request.params;
 
-        if(id == '585') {
+        if (id == '585') {
             return response.status(401).json({ error: "Ação não autorizada, contate o administrador do sistema", id });
         }
 
@@ -179,6 +179,99 @@ class UserRepository {
             });
         }
     }
+
+    // --> Perfil de Acesso
+    //Necessário refatorar ou fazer por meio de stored procedure
+
+    criarPerfilAcesso(request: Request, response: Response) {
+        const { nome_perfil_acesso } = request.body;
+
+        pool.getConnection((err: any, connection: any) => {
+
+            connection.config.queryTimeout = 30000;
+
+            if (err) {
+                return response.status(500).json(err);
+            }
+
+            // Inicie uma transação para garantir a consistência dos dados em todas as tabelas
+            connection.beginTransaction(async (error: any) => {
+                if (error) {
+                    return response.status(400).json(error);
+                }
+
+                let perfilAcessoId: number;
+                let idModulo: number;
+
+                // Insira o novo perfil de acesso
+                connection.query(
+                    'INSERT INTO perfil_acesso (nome_perfil_acesso) VALUES (?)',
+                    [nome_perfil_acesso],
+                    (insertError: any, result: any, fields: any) => {
+                        if (insertError) {
+                            connection.rollback(() => {
+                                return response.status(400).json(insertError);
+                            });
+                            return;
+                        }
+
+                        // Após inserir o perfil de acesso, obtenha o ID gerado
+                        perfilAcessoId = result.insertId;
+
+                        // Insira um registro na tabela modulos_acesso
+                        connection.query(
+                            'INSERT INTO modulos_acesso (perfil_acesso_id, id_modulo, nome_modulo) VALUES (?, ?, ?)',
+                            [perfilAcessoId, 1, 'Cadastros'],
+                            (modulosError: any, modulosResult: any, modulosFields: any) => {
+                                if (modulosError) {
+                                    connection.rollback(() => {
+                                        return response.status(400).json(modulosError);
+                                    });
+                                    return;
+                                }
+
+                                // Obtenha o ID gerado para modulos_acesso
+                                idModulo = modulosResult.insertId;
+                                console.log(idModulo);
+
+                                // Insira um registro na tabela funcionalidades_acesso
+                                connection.query(
+                                    'INSERT INTO funcionalidades_acesso (perfil_acesso_id, id_modulo, nome_funcionalidade) VALUES (?, ?, ?)',
+                                    [perfilAcessoId, idModulo, 'Entrada'],
+                                    (funcionalidadesError: any, funcionalidadesResult: any, funcionalidadesFields: any) => {
+                                        if (funcionalidadesError) {
+                                            connection.rollback(() => {
+                                                return response.status(400).json(funcionalidadesError);
+                                            });
+                                            return;
+                                        }
+
+                                        // Se todas as inserções foram bem-sucedidas, confirme a transação
+                                        connection.commit((commitError: any) => {
+                                            if (commitError) {
+                                                connection.rollback(() => {
+                                                    return response.status(400).json(commitError);
+                                                });
+                                                return;
+                                            }
+
+                                            response.status(200).json({ message: 'Perfil de Acesso criado com sucesso!' });
+                                        });
+                                    }
+                                );
+                            }
+                        );
+                    }
+                );
+            });
+        });
+    }
+
+
+
+
+
+
 
 
 }

@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserRepository = void 0;
 const mysql_1 = require("../../mysql");
@@ -124,6 +133,67 @@ class UserRepository {
                 });
             });
         }
+    }
+    // --> Perfil de Acesso
+    //Necessário refatorar ou fazer por meio de stored procedure
+    criarPerfilAcesso(request, response) {
+        const { nome_perfil_acesso } = request.body;
+        mysql_1.pool.getConnection((err, connection) => {
+            connection.config.queryTimeout = 30000;
+            if (err) {
+                return response.status(500).json(err);
+            }
+            // Inicie uma transação para garantir a consistência dos dados em todas as tabelas
+            connection.beginTransaction((error) => __awaiter(this, void 0, void 0, function* () {
+                if (error) {
+                    return response.status(400).json(error);
+                }
+                let perfilAcessoId;
+                let idModulo;
+                // Insira o novo perfil de acesso
+                connection.query('INSERT INTO perfil_acesso (nome_perfil_acesso) VALUES (?)', [nome_perfil_acesso], (insertError, result, fields) => {
+                    if (insertError) {
+                        connection.rollback(() => {
+                            return response.status(400).json(insertError);
+                        });
+                        return;
+                    }
+                    // Após inserir o perfil de acesso, obtenha o ID gerado
+                    perfilAcessoId = result.insertId;
+                    // Insira um registro na tabela modulos_acesso
+                    connection.query('INSERT INTO modulos_acesso (perfil_acesso_id, id_modulo, nome_modulo) VALUES (?, ?, ?)', [perfilAcessoId, 1, 'Cadastros'], (modulosError, modulosResult, modulosFields) => {
+                        if (modulosError) {
+                            connection.rollback(() => {
+                                return response.status(400).json(modulosError);
+                            });
+                            return;
+                        }
+                        // Obtenha o ID gerado para modulos_acesso
+                        idModulo = modulosResult.insertId;
+                        console.log(idModulo);
+                        // Insira um registro na tabela funcionalidades_acesso
+                        connection.query('INSERT INTO funcionalidades_acesso (perfil_acesso_id, id_modulo, nome_funcionalidade) VALUES (?, ?, ?)', [perfilAcessoId, idModulo, 'Entrada'], (funcionalidadesError, funcionalidadesResult, funcionalidadesFields) => {
+                            if (funcionalidadesError) {
+                                connection.rollback(() => {
+                                    return response.status(400).json(funcionalidadesError);
+                                });
+                                return;
+                            }
+                            // Se todas as inserções foram bem-sucedidas, confirme a transação
+                            connection.commit((commitError) => {
+                                if (commitError) {
+                                    connection.rollback(() => {
+                                        return response.status(400).json(commitError);
+                                    });
+                                    return;
+                                }
+                                response.status(200).json({ message: 'Perfil de Acesso criado com sucesso!' });
+                            });
+                        });
+                    });
+                });
+            }));
+        });
     }
 }
 exports.UserRepository = UserRepository;

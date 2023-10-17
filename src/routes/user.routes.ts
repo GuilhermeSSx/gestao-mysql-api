@@ -25,6 +25,12 @@ userRoutes.get('/get-user', login, (request, response) => {
     userRepository.getUser(request, response);
 })
 
+// Perfil de acesso ⬇️
+
+userRoutes.post('/criar-perfil-acesso', (request, response) => {
+    userRepository.criarPerfilAcesso(request, response);
+})
+
 
 
 export { userRoutes };
